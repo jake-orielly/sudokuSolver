@@ -24,28 +24,38 @@ function printBoard() {
     document.write(result);
 }
 
-function applyCol(x,y,func) {
+function applyCol(x,y,func,val) {
     for (var i = 0; i < startingBoard.length; i++)
         if (i != x)
-            func(i,y,9);
+            func(i,y,val);
 }
 
-function applyRow(x,y,func) {
+function applyRow(x,y,func,val) {
     for (var i = 0; i < startingBoard[0].length; i++)
         if (i != y)
-            func(x,i,9);
+            func(x,i,val);
 }
 
-function applyBlock(x,y,func) {
+function applyBlock(x,y,func,val) {
     var x_start = Math.floor(x/3)*3;
     var y_start = Math.floor(y/3)*3;
     for (var i = y_start; i < y_start+3; i++)
         for (var j = x_start; j < x_start+3; j++)
-            func(i,j,4);
+            func(i,j,val);
 }
 
-function setSquare(x,y,val) {
-    startingBoard[x][y] = val;
+function elimDomain(x,y,val) {
+    if (domains[x] && domains[x][y]){
+        var index = domains[x][y].indexOf(parseInt(val));
+        if (index > -1)
+            domains[x][y].splice(index, 1);
+    }
+}
+
+function restrictDomain(x,y,val) {
+    applyCol(x,y,elimDomain,val);
+    applyRow(x,y,elimDomain,val);
+    applyBlock(x,y,elimDomain,val);
 }
 
 var curr;
@@ -58,12 +68,13 @@ for (var i = 0; i < 9; i++) {
         domains[i][j] = [];
         if (startingBoard[i][j] == 0)
             for (var k = 0; k < 9; k++)
-                domains[i][j][k] = true;
+                domains[i][j].push(k+1);
     }
 }
 
-applyCol(0,8,setSquare);
-applyRow(8,2,setSquare);
-applyBlock(0,5,setSquare)
+for (var i = 0; i < 9; i++)
+    for (var j = 0; j < 9; j++)
+        if (startingBoard[i][j] != 0)
+            restrictDomain(i,j,startingBoard[i][j]);
 
 printBoard();
