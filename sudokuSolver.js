@@ -1,16 +1,34 @@
 var startingBoard = [];
 
-var rows = ["602000000",
-"790106452",
-"850024000",
-"000090035",
-"009405800",
-"520070000",
-"000940018",
-"184203079",
-"000000204"];
+var rows = [
+"905000306",
+"400001790",
+"070906100",
+"097100400",
+"000209000",
+"002003810",
+"006308050",
+"039500001",
+"104000608"];
 
 var domains = [];
+var domainList = [];
+
+function Domain(x,y) {
+    this.x = x;
+    this.y = y;
+    this.list = [];
+
+    this.add = function(x) {
+        this.list.push(x);
+    }
+
+    this.remove = function(x) {
+        var index = this.list.indexOf(parseInt(x));
+        if (index > -1)
+            this.list.splice(index, 1);
+    }
+}
 
 function printBoard() {
     var result = "<table>";
@@ -39,16 +57,14 @@ function applyRow(x,y,func,val) {
 function applyBlock(x,y,func,val) {
     var x_start = Math.floor(x/3)*3;
     var y_start = Math.floor(y/3)*3;
-    for (var i = y_start; i < y_start+3; i++)
-        for (var j = x_start; j < x_start+3; j++)
+    for (var i = x_start; i < x_start+3; i++)
+        for (var j = y_start; j < y_start+3; j++)
             func(i,j,val);
 }
 
 function elimDomain(x,y,val) {
-    if (domains[x] && domains[x][y]){
-        var index = domains[x][y].indexOf(parseInt(val));
-        if (index > -1)
-            domains[x][y].splice(index, 1);
+    if (domains[x] && domains[x][y] && domains[x][y]['list']){
+        domains[x][y].remove(val);
     }
 }
 
@@ -58,6 +74,13 @@ function restrictDomain(x,y,val) {
     applyBlock(x,y,elimDomain,val);
 }
 
+function makeMove() {
+    var curr = domainList[0];
+    startingBoard[curr.x][curr.y] = curr['list'][0];
+    restrictDomain(curr.x,curr.y,curr['list'][0]);
+    domainList.splice(0,1);
+}
+
 var curr;
 for (var i = 0; i < 9; i++) {
     startingBoard[i] = [];
@@ -65,16 +88,39 @@ for (var i = 0; i < 9; i++) {
     for (var j = 0; j < 9; j++) {
         curr = rows[i].split('')
         startingBoard[i][j] = curr[j];
-        domains[i][j] = [];
+        domains[i][j] = new Domain(i,j);
         if (startingBoard[i][j] == 0)
             for (var k = 0; k < 9; k++)
-                domains[i][j].push(k+1);
+                domains[i][j].add(k+1);
     }
 }
 
-for (var i = 0; i < 9; i++)
-    for (var j = 0; j < 9; j++)
+for (var i = 0; i < domains.length; i++)
+    for (var j = 0; j < domains[i].length; j++)
         if (startingBoard[i][j] != 0)
             restrictDomain(i,j,startingBoard[i][j]);
 
+for (var i = 0; i < domains.length; i++)
+    for (var j = 0; j < domains[i].length; j++)
+        if (domains[i][j]['list'].length > 0)
+            domainList.push(domains[i][j]);
+
+domainList.sort(function(a,b) {
+    return a['list'].length - b['list'].length;
+});
+
+printBoard();
+document.write('<hr>');
+
+function step() {
+    domainList.sort(function(a,b) {
+        return a['list'].length - b['list'].length;
+    });
+    while (domainList[0] && domainList[0]['list'].length == 1)
+        makeMove();
+}
+while(domainList.length > 0) {
+    step();
+    console.log(domainList.length)
+}
 printBoard();
